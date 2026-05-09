@@ -1,6 +1,4 @@
-# Premium TickTick Windows Client
-
-### For Ubuntu and probably Macos users:
+# Unlimited TickTick - Windows
 
 > [!TIP]
 > You can also find a MacOS version of this patch in the [Unlimited TickTick - MacOS ](https://github.com/yazdipour/unlimited-ticktick-macos) repository.
@@ -14,9 +12,29 @@
 - Close the app from System tray completely.
 - Copy the exe file inside installed path (usually `C:\Program Files (x86)\TickTick`). Have a backup from the original exe file just in case.
 
-### Uploaded executable for Windows:
+> [!CAUTION]
+> Want the new version or Just got the update notification? First update the app from the app itself, then replace the patched exe file with the new one. This way you can keep enjoying the pro features without losing them after each update.
 
-You can also download the final patched executable output from [Here](https://github.com/yazdipour/cracked-ticktick-windows/releases)
+### Download the patched executable for Windows:
+
+You can also download the final patched executable from [the releases page.](https://github.com/yazdipour/cracked-ticktick-windows/releases)
+
+---
+
+### Cloud Build (GitHub Actions)
+
+If you don't have a local .NET development environment set up, or just prefer to build the patched app in the cloud, you can use GitHub Actions to generate your own patched executable.
+
+1. **Fork this repository** using the fork button on the top right.
+2. Go to the **Actions** tab on your newly forked repository. If prompted, click the button to enable workflows.
+3. On the left sidebar under "All workflows", click on **Build Patched TickTick**.
+4. Click the **Run workflow** button on the right side.
+5. You can optionally provide a direct URL to a specific official TickTick Windows Setup EXE. If left default, it will attempt to download the latest Windows version.
+6. Click **Run workflow** and wait for the build to finish.
+7. Go to the **Releases** section on the right side of your repository's main page. You will find a new **Draft release** containing your `TickTick_Patched.zip` file ready to download.
+8. Download the ZIP, extract the `TickTick_Patched.exe` file, and replace your original `TickTick.exe` located in your TickTick installation folder (usually `C:\Program Files (x86)\TickTick`).
+
+---
 
 ### Features
 

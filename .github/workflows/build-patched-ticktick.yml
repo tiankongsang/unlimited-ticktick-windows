@@ -1,0 +1,93 @@
+name: Build and Release Patched TickTick
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_url:
+        description: "URL to the official TickTick Setup executable. You can find the latest version from https://ticktick.com/download/windows"
+        default: "https://download.ticktick.app/download/win64/tick_win_setup_release_x64_8070.exe"
+        required: true
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Patched TickTick
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Download TickTick Setup
+        shell: pwsh
+        run: |
+          Write-Host "Downloading TickTick Setup from ${{ inputs.app_url }}..."
+          Invoke-WebRequest -Uri "${{ inputs.app_url }}" -OutFile "TickTick_Setup.exe"
+
+      - name: Install TickTick
+        shell: pwsh
+        run: |
+          Write-Host "Installing TickTick silently..."
+          # TickTick uses an NSIS installer. /S for silent, /D sets destination
+          $InstallDir = "C:\TickTickApp"
+          Start-Process -FilePath ".\TickTick_Setup.exe" -ArgumentList "/S", "/D=$InstallDir" -Wait -NoNewWindow
+          
+          # Just in case /D is ignored, check default locations as well
+          $paths = @(
+            "$InstallDir\TickTick.exe",
+            "${env:ProgramFiles(x86)}\TickTick\TickTick.exe",
+            "${env:ProgramFiles}\TickTick\TickTick.exe",
+            "${env:LOCALAPPDATA}\TickTick\TickTick.exe"
+          )
+          
+          $found = $null
+          foreach ($p in $paths) {
+            if (Test-Path $p) {
+              $found = $p
+              break
+            }
+          }
+          
+          if ($null -eq $found) {
+            Write-Error "TickTick.exe not found! Installation may have failed."
+            exit 1
+          }
+          
+          Write-Host "Found TickTick.exe at: $found"
+          Copy-Item $found -Destination ".\TickTick.exe"
+
+      - name: Run Patcher
+        # We can just build and run directly via dotnet run
+        run: dotnet run -- "TickTick.exe"
+
+      - name: Prepare Release Package
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "TickTick_Patched.exe")) {
+            Write-Error "Patching failed: TickTick_Patched.exe not generated."
+            exit 1
+          }
+          Compress-Archive -Path "TickTick_Patched.exe" -DestinationPath "TickTick_Patched.zip"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Patched TickTick (${{ github.run_number }})
+          files: TickTick_Patched.zip
+          draft: true
+
+      - name: Output Release URL
+        shell: pwsh
+        run: |
+          Write-Host "::notice::Release available at: https://github.com/${{ github.repository }}/releases"
