@@ -35,37 +35,19 @@ jobs:
           Write-Host "Downloading TickTick Setup from ${{ inputs.app_url }}..."
           Invoke-WebRequest -Uri "${{ inputs.app_url }}" -OutFile "TickTick_Setup.exe"
 
-      - name: Install TickTick
+      - name: Extract TickTick
         shell: pwsh
         run: |
-          Write-Host "Installing TickTick silently..."
-          # TickTick uses an NSIS installer. /S for silent, /D sets destination
-          $InstallDir = "C:\TickTickApp"
-          Start-Process -FilePath ".\TickTick_Setup.exe" -ArgumentList "/S", "/D=$InstallDir" -Wait -NoNewWindow
+          Write-Host "Extracting TickTick silently using 7z..."
+          # Many setup files (like NSIS) can be extracted directly by 7-zip avoiding installer hangs
+          7z e TickTick_Setup.exe -r TickTick.exe -o"." -y
           
-          # Just in case /D is ignored, check default locations as well
-          $paths = @(
-            "$InstallDir\TickTick.exe",
-            "${env:ProgramFiles(x86)}\TickTick\TickTick.exe",
-            "${env:ProgramFiles}\TickTick\TickTick.exe",
-            "${env:LOCALAPPDATA}\TickTick\TickTick.exe"
-          )
-          
-          $found = $null
-          foreach ($p in $paths) {
-            if (Test-Path $p) {
-              $found = $p
-              break
-            }
-          }
-          
-          if ($null -eq $found) {
-            Write-Error "TickTick.exe not found! Installation may have failed."
+          if (-not (Test-Path "TickTick.exe")) {
+            Write-Error "TickTick.exe not found! Extraction may have failed."
             exit 1
           }
           
-          Write-Host "Found TickTick.exe at: $found"
-          Copy-Item $found -Destination ".\TickTick.exe"
+          Write-Host "Successfully extracted TickTick.exe"
 
       - name: Run Patcher
         # We can just build and run directly via dotnet run
